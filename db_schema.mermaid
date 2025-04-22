@@ -1,0 +1,38 @@
+erDiagram
+    ideas {
+        UUID id PK
+        UUID user_id FK
+        enum state
+        enum step
+        timestamp expire_at
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    idea_details {
+        UUID idea_id PK,FK
+        string title
+        string summary
+        jsonb answers
+        jsonb todos
+        string platform
+    }
+    
+    notifications {
+        UUID id PK
+        UUID user_id FK
+        string message
+        boolean read
+        timestamp created_at
+    }
+    
+    auth_users {
+        UUID id PK
+        string email
+        string encrypted_password
+        timestamp created_at
+    }
+    
+    ideas ||--|| idea_details : has
+    ideas }|--|| auth_users : belongs_to
+    notifications }|--|| auth_users : belongs_to

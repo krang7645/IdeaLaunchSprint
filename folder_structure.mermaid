@@ -1,0 +1,36 @@
+graph TD
+    A[LaunchPad Notebook] --> B[lib]
+    A --> C[assets]
+    A --> D[supabase]
+    
+    B --> B1[main.dart]
+    B --> B2[models]
+    B --> B3[screens]
+    B --> B4[services]
+    B --> B5[utils]
+    B --> B6[widgets]
+    
+    B2 --> B2_1[idea.dart]
+    B2 --> B2_2[todo.dart]
+    
+    B3 --> B3_1[home_screen.dart]
+    B3 --> B3_2[add_idea_screen.dart]
+    B3 --> B3_3[steps_screen.dart]
+    
+    B4 --> B4_1[api_service.dart]
+    
+    B5 --> B5_1[constants.dart]
+    
+    B6 --> B6_1[idea_card.dart]
+    B6 --> B6_2[capture_step.dart]
+    B6 --> B6_3[validate_step.dart]
+    B6 --> B6_4[build_step.dart]
+    B6 --> B6_5[publish_step.dart]
+    
+    C --> C1[fonts]
+    C1 --> C1_1[SF-Pro-Display-Regular.otf]
+    C1 --> C1_2[SF-Pro-Display-Bold.otf]
+    C1 --> C1_3[NotoSansJP-Regular.otf]
+    C1 --> C1_4[NotoSansJP-Bold.otf]
+    
+    D --> D1[schema.sql]

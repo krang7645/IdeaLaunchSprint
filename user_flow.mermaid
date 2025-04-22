@@ -1,0 +1,36 @@
+flowchart TD
+    Start([Start]) --> HomeScreen[Home Screen]
+    HomeScreen --> |Add New Idea| AddIdeaScreen[Add Idea Screen]
+    HomeScreen --> |Tap Idea| StepsScreen[Steps Screen]
+    HomeScreen --> |Swipe Right| ArchiveIdea[Archive Idea]
+    HomeScreen --> |Swipe Left| ExtendDeadline[Extend +24h]
+    
+    AddIdeaScreen --> |Fill Form & Save| CaptureStep[Capture Step]
+    
+    StepsScreen --> CaptureStep
+    CaptureStep --> |Next Step| ValidateStep[Validate Step]
+    
+    ValidateStep --> |Answer Questions| ValidateComplete[Validation Complete\n+48h per answer]
+    ValidateStep --> |Get AI Suggestions| ShowSuggestions[Show AI Suggestions]
+    ShowSuggestions --> |Use Suggestion| ValidateStep
+    
+    ValidateComplete --> |Next Step| BuildStep[Build Step]
+    
+    BuildStep --> |Generate To-Dos| GenerateTodos[AI Generates To-Dos]
+    GenerateTodos --> ShowTodos[Show To-Do List]
+    ShowTodos --> |Complete Item| ExtendDeadline24[Extend +24h]
+    
+    ShowTodos --> |All Done| PublishStep[Publish Step]
+    
+    PublishStep --> |Select Platform| SelectPlatform[Select Platform]
+    SelectPlatform --> |Publish| IdeaPublished[Idea Published\nGet Badge & Streak]
+    
+    IdeaPublished --> HomeScreen
+    
+    subgraph "Timer System"
+    TimerRunning[Timer Running]
+    TimerRunning --> |No Activity| TimerExpired[Timer Expired]
+    TimerRunning --> |User Action| TimerExtended[Timer Extended]
+    TimerExtended --> TimerRunning
+    TimerExpired --> ArchiveIdea
+    end
