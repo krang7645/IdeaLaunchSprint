@@ -1,0 +1,155 @@
+# server/docker-compose.yml
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    volumes:
+      - ./logs:/app/logs
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/www:/var/www/html
+    depends_on:
+      - api
+    restart: always
+
+  redis:
+    image: redis:alpine
+    restart: always
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+volumes:
+  redis-data:
+
+# server/nginx/conf.d/default.conf
+server {
+    listen 80;
+    server_name api.launchpad-notebook.com;
+    
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name api.launchpad-notebook.com;
+    
+    ssl_certificate /etc/nginx/ssl/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384;
+    ssl_session_timeout 10m;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_tickets off;
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    
+    location / {
+        proxy_pass http://api:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+    
+    # Rate limiting
+    limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+    limit_req zone=api burst=20 nodelay;
+    
+    # Logging
+    access_log /var/log/nginx/api.access.log;
+    error_log /var/log/nginx/api.error.log;
+}
+
+# server/Makefile
+.PHONY: setup start stop logs deploy backup
+
+setup:
+	@echo "Setting up LaunchPad Notebook backend..."
+	@npm install
+	@mkdir -p nginx/conf.d nginx/ssl nginx/www logs
+
+start:
+	@echo "Starting LaunchPad Notebook backend..."
+	@docker-compose up -d
+
+stop:
+	@echo "Stopping LaunchPad Notebook backend..."
+	@docker-compose down
+
+logs:
+	@docker-compose logs -f
+
+deploy:
+	@echo "Deploying LaunchPad Notebook backend..."
+	@git pull
+	@npm install
+	@docker-compose build
+	@docker-compose up -d
+
+backup:
+	@echo "Backing up Redis data..."
+	@mkdir -p backups
+	@docker-compose exec redis redis-cli SAVE
+	@docker cp $$(docker-compose ps -q redis):/data/dump.rdb backups/dump-$$(date +%Y%m%d%H%M%S).rdb
+
+# server/.dockerignore
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+docker-compose.yml
+Dockerfile
+README.md
+backups
+logs
+nginx

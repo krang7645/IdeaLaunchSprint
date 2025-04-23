@@ -10,7 +10,6 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
-  supabase_flutter: ^1.10.0
   uuid: ^3.0.7
   http: ^1.1.0
   intl: ^0.18.0
@@ -22,15 +21,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  
-  fonts:
-    - family: SFPro
-      fonts:
-        - asset: assets/fonts/SF-Pro-Display-Regular.otf
-        - asset: assets/fonts/SF-Pro-Display-Bold.otf
-          weight: 700
-    - family: NotoSansJP
-      fonts:
-        - asset: assets/fonts/NotoSansJP-Regular.otf
-        - asset: assets/fonts/NotoSansJP-Bold.otf
-          weight: 700
+
